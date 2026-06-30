@@ -3,391 +3,520 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Heimdall v1 — Compound Growth &amp; Risk Analysis</title>
+<title>Heimdall v1 — Portfolio Builder</title>
 <style>
-:root{--bg:#0d1117;--surface:#161b22;--border:#30363d;--text:#e6edf3;--muted:#8b949e;--pos:#3fb950;--neg:#f85149;--accent:#58a6ff;--hl:#1f6feb22;--gold:#e3b341}
+:root{--bg:#0d1117;--surf:#161b22;--surf2:#1c2128;--border:#30363d;--text:#e6edf3;--muted:#8b949e;
+      --pos:#3fb950;--neg:#f85149;--acc:#58a6ff;--hl:#1f6feb33;--gold:#e3b341;
+      --ca:#58a6ff;--cb:#e3b341;--cc:#bc8cff;--cg:#8b949e}
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--bg);color:var(--text);font-family:'SF Mono',Consolas,monospace;font-size:12px;line-height:1.6;padding:28px;max-width:1200px;margin:0 auto}
-h1{font-size:21px;font-weight:700;color:var(--accent);margin-bottom:4px}
-h2{font-size:14px;font-weight:600;color:var(--accent);margin:34px 0 10px;border-bottom:1px solid var(--border);padding-bottom:5px}
-h3{font-size:12px;font-weight:600;color:var(--muted);margin:18px 0 7px;text-transform:uppercase;letter-spacing:.06em}
-.sub{color:var(--muted);font-size:11px;margin-bottom:24px}
+body{background:var(--bg);color:var(--text);font-family:'SF Mono',Consolas,monospace;font-size:12px;line-height:1.6;padding:20px;max-width:1280px;margin:0 auto}
+h1{font-size:20px;font-weight:700;color:var(--acc);margin-bottom:2px}
+h2{font-size:12px;font-weight:600;color:var(--acc);margin:22px 0 8px;border-bottom:1px solid var(--border);padding-bottom:4px;text-transform:uppercase;letter-spacing:.06em}
+.sub{color:var(--muted);font-size:11px;margin-bottom:16px}
 .pos{color:var(--pos)} .neg{color:var(--neg)} .muted{color:var(--muted)} .bold{font-weight:700}
-.pos.bold{color:var(--pos);font-weight:700} .neg.bold{color:var(--neg);font-weight:700}
-table{width:100%;border-collapse:collapse;margin:10px 0;font-size:11px}
-thead tr{background:var(--surface)}
-th{text-align:right;padding:7px 9px;color:var(--muted);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;border-bottom:2px solid var(--border);white-space:nowrap}
-th.left,td.left,td.yr,td.rmetric{text-align:left}
-td{padding:6px 9px;text-align:right;border-bottom:1px solid #21262d;white-space:nowrap}
-tr:hover{background:var(--hl)}
-.callout{border-radius:7px;padding:14px;margin:14px 0}
-.cgreen{background:#1a2a1a;border:1px solid #2d6a2d}
-.cwarn{background:#2a1a1a;border:1px solid #6a2d2d}
+/* ── ALLOCATION BAR ── */
+.alloc-panel{background:var(--surf);border:1px solid var(--border);border-radius:10px;padding:18px;margin:14px 0}
+.alloc-title{font-size:11px;font-weight:700;color:var(--acc);text-transform:uppercase;letter-spacing:.07em;margin-bottom:14px}
+.alloc-bar-wrap{height:28px;border-radius:6px;overflow:hidden;display:flex;margin-bottom:12px;border:1px solid var(--border)}
+.bar-seg{height:100%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#000;transition:width .2s;white-space:nowrap;overflow:hidden;min-width:0}
+.bar-seg-a{background:var(--ca)}
+.bar-seg-b{background:var(--cb)}
+.bar-seg-c{background:var(--cc)}
+.bar-seg-g{background:var(--cg);color:var(--text)}
+.sliders{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-bottom:12px}
+.slider-row{display:flex;flex-direction:column;gap:4px}
+.slider-label{display:flex;justify-content:space-between;align-items:center;font-size:10px}
+.slider-name{font-weight:700}
+.slider-val{font-size:13px;font-weight:700}
+input[type=range]{width:100%;height:6px;border-radius:3px;outline:none;cursor:pointer;-webkit-appearance:none;background:var(--border)}
+input[type=range].a-range::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--ca);cursor:pointer}
+input[type=range].b-range::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--cb);cursor:pointer}
+input[type=range].c-range::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--cc);cursor:pointer}
+.alloc-info{display:flex;gap:20px;font-size:10px;color:var(--muted);flex-wrap:wrap}
+.alloc-item{display:flex;align-items:center;gap:5px}
+.adot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.warning-bar{background:#3a1010;border:1px solid var(--neg);border-radius:5px;padding:6px 10px;font-size:10px;color:var(--neg);margin-top:8px;display:none}
+/* ── PRESETS ── */
+.presets{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.pbt{background:var(--surf);border:1px solid var(--border);color:var(--muted);padding:5px 12px;border-radius:16px;cursor:pointer;font-family:inherit;font-size:11px;transition:all .12s}
+.pbt:hover{border-color:var(--acc);color:var(--text)}
+.pbt.active{background:var(--acc);color:#000;font-weight:700;border-color:var(--acc)}
+/* ── KPI CARDS ── */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:7px;margin:10px 0}
+.kpi{background:var(--surf);border:1px solid var(--border);border-radius:7px;padding:10px 12px}
+.kpi-l{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px}
+.kpi-v{font-size:18px;font-weight:700}
+.kpi-s{font-size:9px;color:var(--muted);margin-top:2px}
+/* ── CHARTS ── */
+.charts-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:10px 0}
+@media(max-width:680px){.charts-row{grid-template-columns:1fr}}
+.chart-box{background:var(--surf);border:1px solid var(--border);border-radius:7px;padding:12px}
+.chart-title{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
+/* ── COMPARISON TABLE ── */
+table{width:100%;border-collapse:collapse;font-size:11px;margin:8px 0}
+thead tr{background:var(--surf)}
+th{text-align:right;padding:6px 8px;color:var(--muted);font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;border-bottom:2px solid var(--border);white-space:nowrap}
+th.left,td.left{text-align:left}
+td{padding:5px 8px;text-align:right;border-bottom:1px solid #21262d;white-space:nowrap}
+tr.highlight-row td{background:var(--hl)!important;font-weight:700}
+tr:hover td{background:#1c2128}
+.dn{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:5px;vertical-align:middle}
+/* ── CALLOUT ── */
+.callout{border-radius:6px;padding:10px 14px;margin:10px 0;font-size:11px;line-height:1.7}
 .cinfo{background:#1a1e2a;border:1px solid #2d3d6a}
 .cgold{background:#1e1a0d;border:1px solid #6a5a1a}
-.callout p{margin:4px 0;line-height:1.7;font-size:12px}
-.nav{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0 28px}
-.nav a{color:var(--accent);text-decoration:none;padding:3px 10px;border:1px solid var(--border);border-radius:4px;font-size:11px}
-.nav a:hover{background:var(--hl)}
-.chart-wrap{background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:14px;margin:16px 0}
-.legend{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
-.li{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--muted)}
-.ld{width:22px;height:3px;border-radius:2px;flex-shrink:0}
-.metric-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin:14px 0}
-.mc{background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:12px}
-.ml{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:3px}
-.mv{font-size:18px;font-weight:700}
-.ms{font-size:10px;color:var(--muted);margin-top:2px}
-.bb{display:inline-block;background:#1a3a1a;color:var(--pos);border:1px solid #2d6a2d;padding:1px 7px;border-radius:3px;font-size:10px;font-weight:600;margin-left:6px}
-.bmark{font-size:9px;color:var(--muted)}
-.note-col{width:120px;font-size:10px;color:var(--muted);text-align:left;padding-left:8px}
-footer{margin-top:40px;color:var(--muted);font-size:10px;border-top:1px solid var(--border);padding-top:14px}
+.cwarn{background:#2a1a1a;border:1px solid #6a2d2d}
+footer{margin-top:28px;color:var(--muted);font-size:10px;border-top:1px solid var(--border);padding-top:10px}
 </style>
 </head>
 <body>
+<h1>Heimdall v1 — Interactive Portfolio Builder</h1>
+<p class="sub">Drag sliders to set sleeve allocations · Metrics update live · Jan 2012–Nov 2024 · 155 months · Asymmetrica Investments · Confidential</p>
 
-<h1>Heimdall v1 — Compound Growth &amp; Risk Analysis</h1>
-<p class="sub">Starting capital: $1,000,000 &nbsp;·&nbsp; Jan 2012 – Nov 2024 (155 months) &nbsp;·&nbsp; Risk-free rate: 2.5% p.a. &nbsp;·&nbsp; Asymmetrica Investments &nbsp;·&nbsp; Confidential</p>
-
-<div class="nav">
-  <a href="#risk">Risk Metrics</a>
-  <a href="#chart">Chart</a>
-  <a href="#3yr">3 yr</a><a href="#5yr">5 yr</a><a href="#7yr">7 yr</a>
-  <a href="#10yr">10 yr</a><a href="#13yr">13 yr</a>
-  <a href="#yearly">Year-by-Year</a>
-  <a href="#notes">Notes</a>
+<!-- ── ALLOCATION BAR ── -->
+<div class="alloc-panel">
+  <div class="alloc-title">Capital Allocation</div>
+  <div class="alloc-bar-wrap">
+    <div class="bar-seg bar-seg-a" id="barA">A</div>
+    <div class="bar-seg bar-seg-b" id="barB">B</div>
+    <div class="bar-seg bar-seg-c" id="barC"></div>
+    <div class="bar-seg bar-seg-g" id="barG">Bonds</div>
+  </div>
+  <div class="sliders">
+    <div class="slider-row">
+      <div class="slider-label">
+        <span class="slider-name" style="color:var(--ca)">&#9632; Sleeve A</span>
+        <span class="slider-val" style="color:var(--ca)" id="valA">30%</span>
+      </div>
+      <input type="range" class="a-range" id="slA" min="0" max="80" step="1" value="30">
+      <div style="font-size:9px;color:var(--muted)">Short put spread 5%/10% OTM · monthly · 94.8% win rate</div>
+    </div>
+    <div class="slider-row">
+      <div class="slider-label">
+        <span class="slider-name" style="color:var(--cb)">&#9632; Sleeve B</span>
+        <span class="slider-val" style="color:var(--cb)" id="valB">13%</span>
+      </div>
+      <input type="range" class="b-range" id="slB" min="0" max="80" step="1" value="13">
+      <div style="font-size:9px;color:var(--muted)">1DTE call spread on ≥2.5% up days · 34 triggers/13yr · 85.3% win rate</div>
+    </div>
+    <div class="slider-row">
+      <div class="slider-label">
+        <span class="slider-name" style="color:var(--cc)">&#9632; Sleeve C</span>
+        <span class="slider-val" style="color:var(--cc)" id="valC">0%</span>
+      </div>
+      <input type="range" class="c-range" id="slC" min="0" max="50" step="1" value="0">
+      <div style="font-size:9px;color:var(--muted)">Long 10% OTM put · crash insurance · cost ~9% of A max-loss/mo</div>
+    </div>
+  </div>
+  <div class="alloc-info">
+    <div class="alloc-item"><div class="adot" style="background:var(--ca)"></div><span id="infA">A: 30% capital</span></div>
+    <div class="alloc-item"><div class="adot" style="background:var(--cb)"></div><span id="infB">B: 13% capital</span></div>
+    <div class="alloc-item"><div class="adot" style="background:var(--cc)"></div><span id="infC">C: off</span></div>
+    <div class="alloc-item"><div class="adot" style="background:var(--cg)"></div><span id="infG">Bonds: 57%</span></div>
+    <div class="alloc-item" style="margin-left:auto"><strong id="infTotal">Total: 100%</strong></div>
+  </div>
+  <div class="warning-bar" id="warnBar">⚠ Total allocation exceeds 100% — bonds reduced to 0%. Consider reducing A or B.</div>
 </div>
 
-<!-- ── HEADLINE CARDS ── -->
-<div class="metric-grid">
-  <div class="mc"><div class="ml">Winner CAGR</div><div class="mv pos">+24.68%</div><div class="ms">A60+B30+Bonds10 vs S&amp;P +12.91%</div></div>
-  <div class="mc"><div class="ml">$1M → 13yr (winner)</div><div class="mv pos">$17.3M</div><div class="ms">vs S&amp;P $4.8M · 60/40 $2.9M</div></div>
-  <div class="mc"><div class="ml">Winner Sharpe</div><div class="mv" style="color:var(--accent)">0.500</div><div class="ms">vs S&amp;P 0.736 · 60/40 0.705</div></div>
-  <div class="mc"><div class="ml">Constrained CAGR</div><div class="mv" style="color:#58a6ff">+9.90%</div><div class="ms">A10+B13+Bonds76, Sharpe 0.529</div></div>
-  <div class="mc"><div class="ml">Max Drawdown (winner)</div><div class="mv neg">59.9%</div><div class="ms">Mar 2020 — recovered in 57 months</div></div>
-  <div class="mc"><div class="ml">S&amp;P 500 Max Drawdown</div><div class="mv neg">24.8%</div><div class="ms">60/40: 18.8% · Constrained: 20.0%</div></div>
+<!-- ── PRESETS ── -->
+<div class="presets" id="presets">
+  <span style="font-size:10px;color:var(--muted);align-self:center">Presets →</span>
+  <button class="pbt" data-fa="10" data-fb="13" data-fc="0" title="Conservative · ≤20% MaxDD">A10+B13+Bonds77</button>
+  <button class="pbt" data-fa="30" data-fb="20" data-fc="0" title="Balanced">A30+B20+Bonds50</button>
+  <button class="pbt" data-fa="30" data-fb="30" data-fc="0" title="Growth">A30+B30+Bonds40</button>
+  <button class="pbt" data-fa="60" data-fb="30" data-fc="0" title="Max growth · high vol">A60+B30+Bonds10</button>
+  <button class="pbt" data-fa="30" data-fb="0"  data-fc="0" title="A only + Bonds">A30 only</button>
+  <button class="pbt" data-fa="0"  data-fb="30" data-fc="0" title="B only + Bonds">B30 only</button>
+  <button class="pbt" data-fa="30" data-fb="13" data-fc="25" title="Add C tail protection">A30+B13+C(25%)+Bonds</button>
 </div>
 
-<!-- ── RISK METRICS TABLE ── -->
-<h2 id="risk">Risk Metrics — All Strategies vs Benchmarks</h2>
-<div class="callout cinfo">
-<p><strong>Benchmarks:</strong> S&amp;P 500 = SPX price return (^GSPC, excludes ~1.5% dividend yield — total return would add ~1.5%/yr). &nbsp;60/40 = 60% SPX + 40% AGG monthly rebalanced. &nbsp;AGG = iShares Core US Aggregate Bond ETF total return (annual historical). &nbsp;Risk-free rate = 2.5% p.a. for Sharpe/Sortino.</p>
-</div>
-<table>
-<thead>
-<tr>
-  <th class="left" style="min-width:160px">Metric</th>
-  <th style="color:#3fb950;font-size:10px;min-width:90px">A 60% + B 30% + Bonds 10%</th><th style="color:#58a6ff;font-size:10px;min-width:90px">A 10% + B 13% + Bonds 76%</th><th style="color:#e3b341;font-size:10px;min-width:90px">A 30%  (A-only)</th><th style="color:#da3633;font-size:10px;min-width:90px">A 9% + Bonds 91%</th><th style="color:#f0f6fc;font-size:10px;min-width:90px">S&P 500  (benchmark)</th><th style="color:#bc8cff;font-size:10px;min-width:90px">60 / 40  (SPX + AGG)</th><th style="color:#586069;font-size:10px;min-width:90px">AGG Bonds only</th>
-  <th class="left note-col">Notes</th>
-</tr>
-</thead>
-<tbody>
-<tr style="height:4px;background:var(--border)"><td colspan="99"></td></tr>
-<tr><td class="left rmetric" colspan="99" style="color:var(--muted);padding:5px 9px;font-size:10px;background:var(--surface);text-transform:uppercase;letter-spacing:.06em">RETURN</td></tr>
-<tr><td class="left rmetric">CAGR (compound annual)</td><td class="pos bold">+24.68%</td><td class="pos">+9.90%</td><td class="pos">+8.36%</td><td class="pos">+4.41%</td><td class="pos">+12.91%</td><td class="pos">+8.58%</td><td class="pos">+1.77%</td><td class="muted" style="font-size:10px">Geometric, annualized</td></tr>
-<tr><td class="left rmetric">$1M → 13 years</td><td class="pos bold">$17.28M</td><td class="pos">$3.38M</td><td class="pos">$2.82M</td><td class="pos">$1.75M</td><td class="pos">$4.80M</td><td class="pos">$2.90M</td><td class="pos">$1.25M</td><td class="muted" style="font-size:10px">Actual compounded</td></tr>
-<tr><td class="left rmetric">Best month</td><td class="pos bold">+91.76%</td><td class="pos">+34.62%</td><td class="pos">+10.45%</td><td class="pos">+3.69%</td><td class="pos">+12.68%</td><td class="pos">+7.85%</td><td class="pos">+0.70%</td><td class="muted" style="font-size:10px">Single best month</td></tr>
-<tr><td class="left rmetric">Monthly win rate</td><td class="pos">92.3%</td><td class="pos">91.6%</td><td class="pos bold">94.8%</td><td class="pos">91.0%</td><td class="pos">69.0%</td><td class="pos">71.0%</td><td class="pos">69.0%</td><td class="muted" style="font-size:10px">% months positive</td></tr>
-<tr><td class="left rmetric">Positive years (of 13)</td><td class="">10/13</td><td class="">10/13</td><td class=" bold">11/13</td><td class="">10/13</td><td class="">10/13</td><td class="">10/13</td><td class="">9/13</td><td class="muted" style="font-size:10px"></td></tr>
-<tr style="height:4px;background:var(--border)"><td colspan="99"></td></tr>
-<tr><td class="left rmetric" colspan="99" style="color:var(--muted);padding:5px 9px;font-size:10px;background:var(--surface);text-transform:uppercase;letter-spacing:.06em">RISK-ADJUSTED RETURN</td></tr>
-<tr><td class="left rmetric">Sharpe ratio</td><td class="pos">0.500</td><td class="pos">0.529</td><td class="pos">0.374</td><td class="pos">0.377</td><td class="pos bold">0.736</td><td class="pos">0.705</td><td class="neg">-0.458</td><td class="muted" style="font-size:10px">(CAGR−2.5%) / ann.vol</td></tr>
-<tr><td class="left rmetric">Sortino ratio</td><td class="pos">0.791</td><td class="pos">1.108</td><td class="pos">0.415</td><td class="pos">0.422</td><td class="pos bold">1.127</td><td class="pos">1.060</td><td class="neg">-0.512</td><td class="muted" style="font-size:10px">(CAGR−2.5%) / downside dev</td></tr>
-<tr><td class="left rmetric">Calmar ratio</td><td class="pos">0.412</td><td class="pos">0.495</td><td class="pos">0.244</td><td class="pos">0.284</td><td class="pos bold">0.521</td><td class="pos">0.456</td><td class="pos">0.124</td><td class="muted" style="font-size:10px">CAGR / max drawdown</td></tr>
-<tr style="height:4px;background:var(--border)"><td colspan="99"></td></tr>
-<tr><td class="left rmetric" colspan="99" style="color:var(--muted);padding:5px 9px;font-size:10px;background:var(--surface);text-transform:uppercase;letter-spacing:.06em">RISK / DRAWDOWN</td></tr>
-<tr><td class="left rmetric">Annualised volatility</td><td class="pos">44.41%</td><td class="pos">13.97%</td><td class="pos">15.65%</td><td class="pos">5.07%</td><td class="pos">14.14%</td><td class="pos">8.63%</td><td class="pos bold">1.59%</td><td class="muted" style="font-size:10px">Std dev monthly × √12</td></tr>
-<tr><td class="left rmetric">Max drawdown</td><td class="pos">59.9%</td><td class="pos">20.0%</td><td class="pos">34.3%</td><td class="pos">15.5%</td><td class="pos">24.8%</td><td class="pos">18.8%</td><td class="pos bold">14.3%</td><td class="muted" style="font-size:10px">Peak-to-trough, all time</td></tr>
-<tr><td class="left rmetric">Worst month</td><td class="neg">-59.94%</td><td class="neg">-9.66%</td><td class="neg">-30.00%</td><td class="neg">-10.05%</td><td class="neg">-12.51%</td><td class="neg">-7.27%</td><td class="neg bold">-1.15%</td><td class="muted" style="font-size:10px">Single worst month</td></tr>
-<tr><td class="left rmetric">VaR 95% (monthly)</td><td class="neg">-14.93%</td><td class="neg">-6.36%</td><td class="neg">-7.45%</td><td class="neg">-2.29%</td><td class="neg">-6.94%</td><td class="neg">-4.17%</td><td class="neg bold">-1.15%</td><td class="muted" style="font-size:10px">5th percentile monthly loss</td></tr>
-<tr><td class="left rmetric">CVaR 95% (monthly)</td><td class="neg">-31.83%</td><td class="neg">-8.32%</td><td class="neg">-16.36%</td><td class="neg">-5.15%</td><td class="neg">-9.08%</td><td class="neg">-5.58%</td><td class="neg bold">-1.15%</td><td class="muted" style="font-size:10px">Avg loss beyond VaR (tail)</td></tr>
-<tr><td class="left rmetric">Recovery from MaxDD</td><td class="">57 months</td><td class="">31 months</td><td class="">27 months</td><td class="">not yet</td><td class=" bold">26 months</td><td class=" bold">26 months</td><td class="">not yet</td><td class="muted" style="font-size:10px">Months to new equity high</td></tr>
-</tbody>
-</table>
+<!-- ── LIVE METRICS ── -->
+<h2>Live Portfolio Metrics</h2>
+<div class="kpi-grid" id="kpiGrid"></div>
 
-<div class="callout cgold">
-<p><strong>Key comparisons:</strong> The <strong>constrained portfolio</strong> (A10%+B13%+Bonds76%) beats the 60/40 on CAGR (+9.90% vs +8.58%), has a lower max drawdown (20.0% vs 18.8%), a better Sortino (1.108 vs 1.060), and a similar Calmar (0.495 vs 0.456) — all while carrying meaningful option exposure that <em>earns</em> rather than just hedges. The <strong>unconstrained portfolio</strong> beats S&amp;P on raw CAGR (+24.68% vs +12.91%) but has much higher vol (44.4% vs 14.1%) and a worse Sharpe (0.500 vs 0.736). The case for the unconstrained allocation is purely geometric compounding — it wins because the arithmetic mean diverges far from the geometric mean when vol is high, but even accounting for vol drag it still compounds $17.3M vs $4.8M over 13 years.</p>
+<!-- ── CHARTS ── -->
+<div class="charts-row">
+  <div class="chart-box"><div class="chart-title">Annual Returns</div><canvas id="barChart" height="180"></canvas></div>
+  <div class="chart-box"><div class="chart-title">Growth of $1M</div><canvas id="growChart" height="180"></canvas></div>
 </div>
 
-<!-- ── CHART ── -->
-<h2 id="chart">Growth of $1,000,000</h2>
-<div class="callout cinfo" style="padding:10px 14px">
-<p>Strategy lines (solid). Benchmarks (dashed): S&amp;P 500, 60/40, AGG.</p>
-</div>
-<div class="chart-wrap">
-  <canvas id="gc" height="440"></canvas>
-  <div class="legend" id="leg"></div>
-</div>
-
-<!-- ── COMPOUNDING WINDOWS ── -->
-<h2 id="3yr">Compounding — 3 yr <span class="muted" style="font-size:11px;font-weight:400">(from 2021-12 → Nov 2024)</span></h2>
-<table><thead><tr><th class="left">Scenario</th><th>$1M grows to</th><th>CAGR</th><th>Max Drawdown</th></tr></thead>
-<tbody><tr style="background:#0d2a0d">
-<td class="left"><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#3fb950;margin-right:5px;flex-shrink:0"></span>A 60% + B 30% + Bonds 10% 👑</td>
-<td class="pos bold">$1.63M</td>
-<td class="pos bold">+17.75%</td>
-<td class="neg">59.9%</td>
-</tr><tr>
-<td class="left"><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#f0f6fc;margin-right:5px;flex-shrink:0"></span>S&P 500  (benchmark) <span style="font-size:9px;color:var(--muted);font-weight:400">[benchmark]</span></td>
-<td class="pos">$1.32M</td>
-<td class="pos">+9.72%</td>
-<td class="">24.8%</td>
-</tr><tr>
-<td class="left"><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#58a6ff;margin-right:5px;flex-shrink:0"></span>A 10% + B 13% + Bonds 76%</td>
-<td class="pos">$1.21M</td>
-<td class="pos">+6.63%</td>
-<td class="">20.0%</td>
-</tr><tr>
-<td class="left"><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#bc8cff;margin-right:5px;flex-shrink:0"></span>60 / 40  (SPX + AGG) <span style="font-size:9px;color:var(--muted);font-weight:400">[benchmark]</span></td>
-<td class="pos">$1.17M</td>
-<td class="pos">+5.28%</td>
-<td class="">18.8%</td>
-</tr><tr>
-<td class="left"><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#e3b341;margin-right:5px;flex-shrink:0"></span>A 30%  (A-only)</td>
-<td class="pos">$1.15M</td>
-<td class="pos">+4.72%</td>
-<td class="neg">34.3%</td>
-</tr><tr>
-<td class="left"><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#da3633;margin-right:5px;flex-shrink:0"></span>A 9% + Bonds 91%</td>
-<td class="pos">$1.00M</td>
-<td class="pos">+0.16%</td>
-<td class="">15.5%</td>
-</tr><tr>
-<td class="left"><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#586069;margin-right:5px;flex-shrink:0"></span>AGG Bonds only <span style="font-size:9px;color:var(--muted);font-weight:400">[benchmark]</span></td>
-<td class="pos">$944,387</td>
-<td class="pos">-1.89%</td>
-<td class="">13.1%</td>
-</tr></tbody></table>
-<h2 id="5yr">Compounding — 5 yr <span class="muted" style="font-size:11px;font-weight:400">(from 2019-12 → Nov 2024)</span></h2>
-<table><thead><tr><th class="left">Scenario</th><th>$1M grows to</th><th>CAGR</th><th>Max Drawdown</th></tr></thead>
-<tbody><tr style="background:#0d2a0d">
-<td class="left"><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#3fb950;margin-right:5px;flex-shrink:0"></span>A 60% + B 30% + Bonds 10% 👑</td>
-<td class="pos bold">$5.12M</td>
-<td class="pos bold">+38.65%</td>
-<td class="neg">59.9%</td>
-</tr><tr>
-<td class="left"><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#58a6ff;margin-right:5px;flex-shrink:0"></span>A 10% + B 13% + Bonds 76%</td>
-<td class="pos">$2.17M</td>
-<td class="pos">+16.73%</td>
-<td class="">20.0%</td>
-</tr><tr>
-<td class="left"><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#f0f6fc;margin-right:5px;flex-shrink:0"></span>S&P 500  (benchmark) <span style="font-size:9px;color:var(--muted);font-weight:400">[benchmark]</span></td>
-<td class="pos">$1.92M</td>
-<td class="pos">+13.94%</td>
-<td class="">24.8%</td>
-</tr><tr>
-<td class="left"><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#e3b341;margin-right:5px;flex-shrink:0"></span>A 30%  (A-only)</td>
-<td class="pos">$1.60M</td>
-<td class="pos">+9.83%</td>
-<td class="neg">34.3%</td>
-</tr><tr>
-<td class="left"><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#bc8cff;margin-right:5px;flex-shrink:0"></span>60 / 40  (SPX + AGG) <span style="font-size:9px;color:var(--muted);font-weight:400">[benchmark]</span></td>
-<td class="pos">$1.51M</td>
-<td class="pos">+8.64%</td>
-<td class="">18.8%</td>
-</tr><tr>
-<td class="left"><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#da3633;margin-right:5px;flex-shrink:0"></span>A 9% + Bonds 91%</td>
-<td class="pos">$1.20M</td>
-<td class="pos">+3.65%</td>
-<td class="">15.5%</td>
-</tr><tr>
-<td class="left"><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#586069;margin-right:5px;flex-shrink:0"></span>AGG Bonds only <span style="font-size:9px;color:var(--muted);font-weight:400">[benchmark]</span></td>
-<td class="pos">$1.01M</td>
-<td class="pos">+0.16%</td>
-<td class="">14.3%</td>
-</tr></tbody></table>
-<h2 id="7yr">Compounding — 7 yr <span class="muted" style="font-size:11px;font-weight:400">(from 2017-12 → Nov 2024)</span></h2>
-<table><thead><tr><th class="left">Scenario</th><th>$1M grows to</th><th>CAGR</th><th>Max Drawdown</th></tr></thead>
-<tbody><tr style="background:#0d2a0d">
-<td class="left"><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#3fb950;margin-right:5px;flex-shrink:0"></span>A 60% + B 30% + Bonds 10% 👑</td>
-<td class="pos bold">$10.49M</td>
-<td class="pos bold">+39.90%</td>
-<td class="neg">59.9%</td>
-</tr><tr>
-<td class="left"><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#58a6ff;margin-right:5px;flex-shrink:0"></span>A 10% + B 13% + Bonds 76%</td>
-<td class="pos">$2.79M</td>
-<td class="pos">+15.79%</td>
-<td class="">20.0%</td>
-</tr><tr>
-<td class="left"><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#f0f6fc;margin-right:5px;flex-shrink:0"></span>S&P 500  (benchmark) <span style="font-size:9px;color:var(--muted);font-weight:400">[benchmark]</span></td>
-<td class="pos">$2.28M</td>
-<td class="pos">+12.48%</td>
-<td class="">24.8%</td>
-</tr><tr>
-<td class="left"><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#e3b341;margin-right:5px;flex-shrink:0"></span>A 30%  (A-only)</td>
-<td class="pos">$2.02M</td>
-<td class="pos">+10.55%</td>
-<td class="neg">34.3%</td>
-</tr><tr>
-<td class="left"><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#bc8cff;margin-right:5px;flex-shrink:0"></span>60 / 40  (SPX + AGG) <span style="font-size:9px;color:var(--muted);font-weight:400">[benchmark]</span></td>
-<td class="pos">$1.74M</td>
-<td class="pos">+8.22%</td>
-<td class="">18.8%</td>
-</tr><tr>
-<td class="left"><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#da3633;margin-right:5px;flex-shrink:0"></span>A 9% + Bonds 91%</td>
-<td class="pos">$1.38M</td>
-<td class="pos">+4.71%</td>
-<td class="">15.5%</td>
-</tr><tr>
-<td class="left"><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#586069;margin-right:5px;flex-shrink:0"></span>AGG Bonds only <span style="font-size:9px;color:var(--muted);font-weight:400">[benchmark]</span></td>
-<td class="pos">$1.09M</td>
-<td class="pos">+1.24%</td>
-<td class="">14.3%</td>
-</tr></tbody></table>
-<h2 id="10yr">Compounding — 10 yr <span class="muted" style="font-size:11px;font-weight:400">(from 2014-12 → Nov 2024)</span></h2>
-<table><thead><tr><th class="left">Scenario</th><th>$1M grows to</th><th>CAGR</th><th>Max Drawdown</th></tr></thead>
-<tbody><tr style="background:#0d2a0d">
-<td class="left"><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#3fb950;margin-right:5px;flex-shrink:0"></span>A 60% + B 30% + Bonds 10% 👑</td>
-<td class="pos bold">$10.71M</td>
-<td class="pos bold">+26.75%</td>
-<td class="neg">59.9%</td>
-</tr><tr>
-<td class="left"><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#f0f6fc;margin-right:5px;flex-shrink:0"></span>S&P 500  (benchmark) <span style="font-size:9px;color:var(--muted);font-weight:400">[benchmark]</span></td>
-<td class="pos">$2.92M</td>
-<td class="pos">+11.30%</td>
-<td class="">24.8%</td>
-</tr><tr>
-<td class="left"><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#58a6ff;margin-right:5px;flex-shrink:0"></span>A 10% + B 13% + Bonds 76%</td>
-<td class="pos">$2.84M</td>
-<td class="pos">+10.99%</td>
-<td class="">20.0%</td>
-</tr><tr>
-<td class="left"><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#e3b341;margin-right:5px;flex-shrink:0"></span>A 30%  (A-only)</td>
-<td class="pos">$2.36M</td>
-<td class="pos">+8.97%</td>
-<td class="neg">34.3%</td>
-</tr><tr>
-<td class="left"><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#bc8cff;margin-right:5px;flex-shrink:0"></span>60 / 40  (SPX + AGG) <span style="font-size:9px;color:var(--muted);font-weight:400">[benchmark]</span></td>
-<td class="pos">$2.08M</td>
-<td class="pos">+7.59%</td>
-<td class="">18.8%</td>
-</tr><tr>
-<td class="left"><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#da3633;margin-right:5px;flex-shrink:0"></span>A 9% + Bonds 91%</td>
-<td class="pos">$1.55M</td>
-<td class="pos">+4.45%</td>
-<td class="">15.5%</td>
-</tr><tr>
-<td class="left"><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#586069;margin-right:5px;flex-shrink:0"></span>AGG Bonds only <span style="font-size:9px;color:var(--muted);font-weight:400">[benchmark]</span></td>
-<td class="pos">$1.17M</td>
-<td class="pos">+1.55%</td>
-<td class="">14.3%</td>
-</tr></tbody></table>
-<h2 id="13yr">Compounding — 13 yr <span class="muted" style="font-size:11px;font-weight:400">(from 2012-01 → Nov 2024)</span></h2>
-<table><thead><tr><th class="left">Scenario</th><th>$1M grows to</th><th>CAGR</th><th>Max Drawdown</th></tr></thead>
-<tbody><tr style="background:#0d2a0d">
-<td class="left"><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#3fb950;margin-right:5px;flex-shrink:0"></span>A 60% + B 30% + Bonds 10% 👑</td>
-<td class="pos bold">$17.28M</td>
-<td class="pos bold">+24.68%</td>
-<td class="neg">59.9%</td>
-</tr><tr>
-<td class="left"><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#f0f6fc;margin-right:5px;flex-shrink:0"></span>S&P 500  (benchmark) <span style="font-size:9px;color:var(--muted);font-weight:400">[benchmark]</span></td>
-<td class="pos">$4.80M</td>
-<td class="pos">+12.91%</td>
-<td class="">24.8%</td>
-</tr><tr>
-<td class="left"><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#58a6ff;margin-right:5px;flex-shrink:0"></span>A 10% + B 13% + Bonds 76%</td>
-<td class="pos">$3.38M</td>
-<td class="pos">+9.90%</td>
-<td class="">20.0%</td>
-</tr><tr>
-<td class="left"><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#bc8cff;margin-right:5px;flex-shrink:0"></span>60 / 40  (SPX + AGG) <span style="font-size:9px;color:var(--muted);font-weight:400">[benchmark]</span></td>
-<td class="pos">$2.90M</td>
-<td class="pos">+8.58%</td>
-<td class="">18.8%</td>
-</tr><tr>
-<td class="left"><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#e3b341;margin-right:5px;flex-shrink:0"></span>A 30%  (A-only)</td>
-<td class="pos">$2.82M</td>
-<td class="pos">+8.36%</td>
-<td class="neg">34.3%</td>
-</tr><tr>
-<td class="left"><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#da3633;margin-right:5px;flex-shrink:0"></span>A 9% + Bonds 91%</td>
-<td class="pos">$1.75M</td>
-<td class="pos">+4.41%</td>
-<td class="">15.5%</td>
-</tr><tr>
-<td class="left"><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#586069;margin-right:5px;flex-shrink:0"></span>AGG Bonds only <span style="font-size:9px;color:var(--muted);font-weight:400">[benchmark]</span></td>
-<td class="pos">$1.25M</td>
-<td class="pos">+1.77%</td>
-<td class="">14.3%</td>
-</tr></tbody></table>
-
-<!-- ── YEAR BY YEAR ── -->
-<h2 id="yearly">Annual Returns — All Scenarios vs Benchmarks</h2>
+<!-- ── COMPARISON TABLE ── -->
+<h2>Comparison vs Benchmarks</h2>
+<div class="callout cinfo" style="font-size:10px">SPX excludes dividends (add ~1.5%/yr for total return). Risk-free 2.5% p.a. Highlighted row = current allocation. <strong>Note:</strong> Sleeve B results include 2020 COVID crash period where high-VIX mean-reversion trades paid very large credits — this inflates 3/5yr windows that include 2020. 13yr CAGR is the most reliable horizon.</div>
 <table>
 <thead><tr>
-  <th class="left">Year</th>
-  <th style="color:#3fb950;font-size:10px">A 60% + B 30% + Bonds 10%</th><th style="color:#58a6ff;font-size:10px">A 10% + B 13% + Bonds 76%</th><th style="color:#e3b341;font-size:10px">A 30%  (A-only)</th><th style="color:#da3633;font-size:10px">A 9% + Bonds 91%</th><th style="color:#f0f6fc;font-size:10px">S&P 500  (benchmark)</th><th style="color:#bc8cff;font-size:10px">60 / 40  (SPX + AGG)</th><th style="color:#586069;font-size:10px">AGG Bonds only</th>
+  <th class="left" style="min-width:180px">Portfolio / Benchmark</th>
+  <th>CAGR</th><th>$1M→13yr</th><th>Sharpe</th><th>Sortino</th><th>Calmar</th>
+  <th>Ann.Vol</th><th>Max DD</th><th>Worst Mo</th><th>Win Rate</th>
 </tr></thead>
-<tbody><tr><td class="yr">2012</td><td class="pos bold">+30.1%</td><td class="pos ">+10.8%</td><td class="pos ">+9.4%</td><td class="pos ">+6.7%</td><td class="pos ">+13.5%</td><td class="pos ">+9.8%</td><td class="pos ">+4.2%</td></tr><tr><td class="yr">2013</td><td class="pos ">+5.4%</td><td class="pos ">+0.8%</td><td class="pos ">+0.9%</td><td class="neg ">-1.5%</td><td class="pos bold">+29.6%</td><td class="pos ">+16.1%</td><td class="neg ">-2.0%</td></tr><tr><td class="yr">2014</td><td class="neg ">-8.4%</td><td class="neg ">-3.5%</td><td class="pos ">+9.0%</td><td class="pos ">+8.1%</td><td class="pos ">+11.4%</td><td class="pos ">+9.2%</td><td class="pos ">+5.9%</td></tr><tr><td class="yr">2015</td><td class="neg bold">-26.1%</td><td class="neg ">-5.9%</td><td class="neg ">-6.6%</td><td class="neg ">-1.0%</td><td class="neg ">-0.7%</td><td class="neg ">-0.0%</td><td class="pos ">+0.5%</td></tr><tr><td class="yr">2016</td><td class="pos bold">+58.2%</td><td class="pos ">+14.6%</td><td class="pos ">+17.5%</td><td class="pos ">+7.5%</td><td class="pos ">+9.5%</td><td class="pos ">+6.8%</td><td class="pos ">+2.6%</td></tr><tr><td class="yr">2017</td><td class="pos ">+13.1%</td><td class="pos ">+4.7%</td><td class="pos ">+6.2%</td><td class="pos ">+5.0%</td><td class="pos ">+19.4%</td><td class="pos ">+12.8%</td><td class="pos ">+3.5%</td></tr><tr><td class="yr">2018</td><td class="pos bold">+39.0%</td><td class="pos ">+11.6%</td><td class="pos ">+7.8%</td><td class="pos ">+2.3%</td><td class="neg ">-6.2%</td><td class="neg ">-3.6%</td><td class="neg ">-0.1%</td></tr><tr><td class="yr">2019</td><td class="pos bold">+48.6%</td><td class="pos ">+15.9%</td><td class="pos ">+17.6%</td><td class="pos ">+13.3%</td><td class="pos bold">+28.9%</td><td class="pos bold">+20.6%</td><td class="pos ">+8.7%</td></tr><tr><td class="yr">2020</td><td class="pos bold">+92.2%</td><td class="pos bold">+63.2%</td><td class="pos ">+11.1%</td><td class="pos ">+11.9%</td><td class="pos ">+16.3%</td><td class="pos ">+13.5%</td><td class="pos ">+7.5%</td></tr><tr><td class="yr">2021</td><td class="pos bold">+76.4%</td><td class="pos ">+11.6%</td><td class="pos bold">+27.6%</td><td class="pos ">+6.2%</td><td class="pos bold">+26.9%</td><td class="pos ">+14.9%</td><td class="neg ">-1.5%</td></tr><tr><td class="yr">2022</td><td class="neg bold">-27.6%</td><td class="neg ">-5.2%</td><td class="neg ">-16.7%</td><td class="neg ">-15.3%</td><td class="neg ">-19.4%</td><td class="neg ">-16.4%</td><td class="neg ">-13.0%</td></tr><tr><td class="yr">2023</td><td class="pos bold">+52.0%</td><td class="pos ">+12.9%</td><td class="pos bold">+20.8%</td><td class="pos ">+11.1%</td><td class="pos bold">+24.2%</td><td class="pos ">+16.7%</td><td class="pos ">+5.5%</td></tr><tr><td class="yr">2024</td><td class="pos bold">+35.0%</td><td class="pos ">+10.2%</td><td class="pos ">+11.0%</td><td class="pos ">+6.0%</td><td class="pos bold">+26.5%</td><td class="pos ">+16.7%</td><td class="pos ">+3.0%</td></tr></tbody>
+<tbody id="compBody"></tbody>
 </table>
 
-<!-- ── NOTES ── -->
-<h2 id="notes">Methodology Notes</h2>
-<div class="callout cinfo">
-<p><strong>Sleeve A:</strong> Short SPX put spread (short 5% OTM / long 10% OTM), ~28 DTE, monthly. 155 real fills from QuantConnect LEAN backtester 2012–2024. Win rate 94.8%, mean return +2.63% on max-loss per trade.</p>
-<p><strong>Sleeve B (conditional):</strong> Short 1DTE call spread (1%/2% OTM) triggered when SPX closes ≥+2% vs prior close. 70 triggers in 13 years (5.4/yr), win rate 85.7%, standalone Sharpe 2.013. Priced via Black-Scholes on daily SPX + VIX (yfinance). Trigger proxy = daily close-to-close; real intraday trigger would use a different sample.</p>
-<p><strong>Bonds:</strong> AGG historical annual total returns converted to monthly compounding.</p>
-<p><strong>S&amp;P 500:</strong> Price return (^GSPC monthly closes). Excludes dividends (~1.4–1.8%/yr); total return S&amp;P 500 would be approximately +14.3–14.5%/yr over this period, implying the strategies still compare as shown.</p>
-<p><strong>60/40:</strong> 60% SPX price return + 40% AGG, monthly rebalanced.</p>
-<p><strong>Risk-free rate:</strong> 2.5% p.a. flat for Sharpe/Sortino. Actual Fed Funds ranged 0–5.5% over this period; 2.5% is the approximate average.</p>
-<p><strong>No Sleeve C</strong> in the main scenarios shown. C sizing (f=0.25 recommended) reduces CAGR by ~2.2% p.a. at A=10% sizing (see full sleeve report for details).</p>
+<!-- ── YEAR BY YEAR ── -->
+<h2>Annual Returns — Year by Year</h2>
+<table id="yrTable">
+  <thead><tr id="yrHead"><th class="left">Year</th></tr></thead>
+  <tbody id="yrBody"></tbody>
+</table>
+
+<div class="callout cgold" style="margin-top:14px;font-size:10px">
+<strong>Model:</strong> Sleeve A = QC LEAN real fills (2012–2024, 155 trades). Sleeve B = sell 1DTE call spread (short K+1%, long K+2%) when SPX closes ≥+2.5% vs prior day; expires next business day close; sequential compounding of multiple trades within month; priced via Black-Scholes (pure Python). Sleeve C = long 10% OTM SPX put, monthly roll; sized as fc% of A max-loss. Bonds = AGG total-return proxy (annual: 2012 +4.2%, 2013 -2.0%, 2014 +6.0%, 2019 +8.7%, 2022 -13.0%). Portfolio return = fa×A_ror[i] + fb×B_ror[i] + wb×Bond[i] + fa×fc×C_vs_A[i]. Bonds fill 100% - A% - B%.
 </div>
 
-<footer>
-Heimdall v1 · The Suzie Q · Paper-first · Branch heimdall-build-v1<br>
-Data: QC LEAN real-fill Sleeve A (155 trades 2012–2024) · Sleeve B: yfinance + BS 1DTE · Bonds: AGG historical · SPX: ^GSPC<br>
-No live orders · No broker credentials · Manual execution only · Asymmetrica Investments · Confidential · 2026-06-30
-</footer>
+<div class="callout cwarn" style="margin-top:6px;font-size:10px">
+<strong>Disclosures:</strong> Backtest — not live trading. B strategy relies on mean-reversion after large up days; 2020 COVID crash inflated returns due to extreme VIX and multiple reversal opportunities. Paper-first; no live orders placed. Asymmetrica Investments confidential.
+</div>
+
+<footer>Heimdall v1 · The Suzie Q · Branch heimdall-build-v1 · 2026-06-30 · Paper-first · No live orders</footer>
 
 <script>
-const raw={"years": ["2012", "2013", "2014", "2015", "2016", "2017", "2018", "2019", "2020", "2021", "2022", "2023", "2024"], "datasets": [{"label": "A 60% + B 30% + Bonds 10%", "color": "#3fb950", "vals": [1300772.64, 1371598.41, 1256137.79, 928706.36, 1469339.38, 1661409.68, 2309168.3, 3431197.43, 6595594.27, 11632691.64, 8425316.88, 12804060.39, 17279550.59], "dashed": false, "group": "strategy"}, {"label": "A 10% + B 13% + Bonds 76%", "color": "#58a6ff", "vals": [1107821.19, 1116508.94, 1077790.02, 1014556.2, 1162548.48, 1217406.02, 1358651.09, 1574055.9, 2569069.18, 2867651.41, 2718698.47, 3070366.39, 3384349.67], "dashed": false, "group": "strategy"}, {"label": "A 30%  (A-only)", "color": "#e3b341", "vals": [1093585.42, 1103708.34, 1203499.28, 1124578.05, 1321777.24, 1403347.51, 1513260.17, 1779468.7, 1977518.26, 2523735.26, 2103003.56, 2540761.71, 2820313.84], "dashed": false, "group": "strategy"}, {"label": "A 9% + Bonds 91%", "color": "#da3633", "vals": [1067302.24, 1051515.66, 1136947.15, 1125242.45, 1209367.43, 1270434.62, 1300280.92, 1472683.18, 1648377.54, 1750447.25, 1482084.38, 1647211.91, 1746360.63], "dashed": false, "group": "strategy"}, {"label": "S&P 500  (benchmark)", "color": "#f0f6fc", "vals": [1134509.99, 1470339.13, 1637820.07, 1625919.68, 1780951.49, 2126811.65, 1994156.88, 2570030.91, 2987890.25, 3791415.77, 3054257.36, 3794319.21, 4798656.24], "dashed": true, "group": "bench"}, {"label": "60 / 40  (SPX + AGG)", "color": "#bc8cff", "vals": [1098006.42, 1274503.41, 1392293.85, 1391773.1, 1486854.66, 1677448.58, 1617633.4, 1951632.23, 2215489.68, 2545391.85, 2127140.86, 2481669.72, 2895521.69], "dashed": true, "group": "bench"}, {"label": "AGG Bonds only", "color": "#586069", "vals": [1042000.0, 1021160.0, 1081408.44, 1086815.48, 1115072.68, 1154100.23, 1152946.13, 1253252.44, 1347246.37, 1327037.68, 1154522.78, 1218021.53, 1254816.62], "dashed": true, "group": "bench"}]};
-const years=raw.years,ds=raw.datasets;
-const cv=document.getElementById('gc');
-const cx=cv.getContext('2d');
-const W=cv.parentElement.offsetWidth-28,H=440;
-cv.width=W*devicePixelRatio;cv.height=H*devicePixelRatio;
-cv.style.width=W+'px';cv.style.height=H+'px';
-cx.scale(devicePixelRatio,devicePixelRatio);
-const P={l:72,r:16,t:16,b:38};
-const w=W-P.l-P.r,h=H-P.t-P.b;
-let av=[];ds.forEach(d=>d.vals.forEach(v=>{if(v!=null)av.push(v)}));
-const mx=Math.max(...av)*1.06;
-const xp=i=>P.l+(i/(years.length-1))*w;
-const yp=v=>P.t+h-(v/mx)*h;
-const grids=[500000,1000000,2000000,5000000,10000000,15000000,20000000].filter(v=>v<=mx*1.02);
-grids.forEach(v=>{
-  cx.strokeStyle='#21262d';cx.lineWidth=0.5;
-  cx.beginPath();cx.moveTo(P.l,yp(v));cx.lineTo(P.l+w,yp(v));cx.stroke();
-  cx.fillStyle='#8b949e';cx.font='9px Consolas,monospace';cx.textAlign='right';
-  cx.fillText(v>=1e6?'$'+(v/1e6).toFixed(0)+'M':'$'+(v/1000).toFixed(0)+'K',P.l-5,yp(v)+3);
+// ── Embedded data ──
+const S = {"dates": ["2012-01", "2012-02", "2012-03", "2012-04", "2012-05", "2012-06", "2012-07", "2012-08", "2012-09", "2012-10", "2012-11", "2012-12", "2013-01", "2013-02", "2013-03", "2013-04", "2013-05", "2013-06", "2013-07", "2013-08", "2013-09", "2013-10", "2013-11", "2013-12", "2014-01", "2014-02", "2014-03", "2014-04", "2014-05", "2014-06", "2014-07", "2014-08", "2014-09", "2014-10", "2014-11", "2014-12", "2015-01", "2015-02", "2015-03", "2015-04", "2015-05", "2015-06", "2015-07", "2015-08", "2015-09", "2015-10", "2015-11", "2015-12", "2016-01", "2016-02", "2016-03", "2016-04", "2016-05", "2016-06", "2016-07", "2016-08", "2016-09", "2016-10", "2016-11", "2016-12", "2017-01", "2017-02", "2017-03", "2017-04", "2017-05", "2017-06", "2017-07", "2017-08", "2017-09", "2017-10", "2017-11", "2017-12", "2018-01", "2018-02", "2018-03", "2018-04", "2018-05", "2018-06", "2018-07", "2018-08", "2018-09", "2018-10", "2018-11", "2018-12", "2019-01", "2019-02", "2019-03", "2019-04", "2019-05", "2019-06", "2019-07", "2019-08", "2019-09", "2019-10", "2019-11", "2019-12", "2020-01", "2020-02", "2020-03", "2020-04", "2020-05", "2020-06", "2020-07", "2020-08", "2020-09", "2020-10", "2020-11", "2020-12", "2021-01", "2021-02", "2021-03", "2021-04", "2021-05", "2021-06", "2021-07", "2021-08", "2021-09", "2021-10", "2021-11", "2021-12", "2022-01", "2022-02", "2022-03", "2022-04", "2022-05", "2022-06", "2022-07", "2022-08", "2022-09", "2022-10", "2022-11", "2022-12", "2023-01", "2023-02", "2023-03", "2023-04", "2023-05", "2023-06", "2023-07", "2023-08", "2023-09", "2023-10", "2023-11", "2023-12", "2024-01", "2024-02", "2024-03", "2024-04", "2024-05", "2024-06", "2024-07", "2024-08", "2024-09", "2024-10", "2024-11"], "a_rors": [0.100917, 0.043219, 0.027146, -0.249401, 0.046699, 0.067073, 0.063022, 0.032448, 0.028655, 0.050263, 0.051841, 0.051051, 0.01833, 0.019022, 0.035599, 0.027617, -0.248405, 0.054018, 0.017812, 0.045069, 0.021635, 0.012507, 0.028571, 0.010101, 0.030338, 0.019253, 0.023156, 0.017675, 0.024811, 0.012146, 0.016777, 0.020956, 0.028807, 0.060445, 0.010587, 0.02489, 0.088083, 0.014003, 0.031434, 0.019417, 0.040119, 0.02489, 0.028907, 0.130952, 0.088139, 0.049475, 0.009615, -0.667822, 0.140684, 0.084475, 0.019368, 0.026895, 0.022893, 0.062699, 0.030445, 0.020408, 0.053135, 0.044776, 0.020882, 0.017699, 0.013216, 0.014109, 0.026786, 0.012231, 0.016088, 0.020842, 0.010918, 0.019992, 0.01916, 0.022817, 0.010101, 0.013894, 0.016334, 0.051402, 0.061321, 0.064701, 0.02818, 0.029356, 0.018552, 0.02764, 0.018616, 0.080865, -0.311149, 0.189245, 0.068884, 0.033691, 0.040505, 0.024011, 0.058201, 0.047309, 0.026343, 0.075668, 0.06383, 0.035197, 0.043069, 0.027617, 0.036901, -1.0, 0.348436, 0.25, 0.15119, 0.137197, 0.125968, 0.066499, 0.123978, 0.184834, 0.076207, 0.083773, 0.099831, 0.095101, 0.069519, 0.079137, 0.058468, 0.037549, 0.075538, 0.040703, 0.086957, 0.057958, 0.029347, 0.092118, 0.10999, 0.148504, 0.092763, -1.0, -0.138032, 0.155718, 0.139684, -0.34062, 0.169065, 0.147343, 0.042196, 0.097631, 0.084011, 0.091107, 0.101322, 0.064935, 0.072737, 0.031895, 0.021088, 0.031895, 0.036389, 0.063291, 0.017474, 0.02063, 0.014703, 0.028383, 0.029056, 0.032389, 0.021982, 0.011587, 0.033058, 0.04712, 0.021139, 0.051661, 0.058866], "b_rors": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.065499, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -1.0, 0.209584, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.155562, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.279238, 0.160574, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 16.1905, 1.626014, 0.265975, -0.041455, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.302594, 0.0, 0.216555, 0.240193, 0.124264, 0.0, 0.0, -1.0, 0.19086, 0.149093, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.087152], "c_vs_a": [-0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, 3.048448, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09, -0.09], "bond_mo": [0.003442, 0.003442, 0.003442, 0.003442, 0.003442, 0.003442, 0.003442, 0.003442, 0.003442, 0.003442, 0.003442, 0.003442, -0.001682, -0.001682, -0.001682, -0.001682, -0.001682, -0.001682, -0.001682, -0.001682, -0.001682, -0.001682, -0.001682, -0.001682, 0.004844, 0.004844, 0.004844, 0.004844, 0.004844, 0.004844, 0.004844, 0.004844, 0.004844, 0.004844, 0.004844, 0.004844, 0.000457, 0.000457, 0.000457, 0.000457, 0.000457, 0.000457, 0.000457, 0.000457, 0.000457, 0.000457, 0.000457, 0.000457, 0.002182, 0.002182, 0.002182, 0.002182, 0.002182, 0.002182, 0.002182, 0.002182, 0.002182, 0.002182, 0.002182, 0.002182, 0.002903, 0.002903, 0.002903, 0.002903, 0.002903, 0.002903, 0.002903, 0.002903, 0.002903, 0.002903, 0.002903, 0.002903, -4.2e-05, -4.2e-05, -4.2e-05, -4.2e-05, -4.2e-05, -4.2e-05, -4.2e-05, -4.2e-05, -4.2e-05, -4.2e-05, -4.2e-05, -4.2e-05, 0.006991, 0.006991, 0.006991, 0.006991, 0.006991, 0.006991, 0.006991, 0.006991, 0.006991, 0.006991, 0.006991, 0.006991, 0.006154, 0.006154, 0.006154, 0.006154, 0.006154, 0.006154, 0.006154, 0.006154, 0.006154, 0.006154, 0.006154, 0.006154, -0.001292, -0.001292, -0.001292, -0.001292, -0.001292, -0.001292, -0.001292, -0.001292, -0.001292, -0.001292, -0.001292, -0.001292, -0.011557, -0.011557, -0.011557, -0.011557, -0.011557, -0.011557, -0.011557, -0.011557, -0.011557, -0.011557, -0.011557, -0.011557, 0.004495, 0.004495, 0.004495, 0.004495, 0.004495, 0.004495, 0.004495, 0.004495, 0.004495, 0.004495, 0.004495, 0.004495, 0.002693, 0.002693, 0.002693, 0.002693, 0.002693, 0.002693, 0.002693, 0.002693, 0.002693, 0.002693, 0.002693], "spx_mo": [0.043583, 0.040589, 0.031332, -0.007497, -0.062651, 0.039555, 0.012598, 0.019763, 0.024236, -0.019789, 0.002847, 0.007068, 0.050428, 0.011061, 0.035988, 0.018086, 0.020763, -0.014999, 0.049462, -0.031298, 0.02975, 0.044596, 0.028049, 0.023563, -0.035583, 0.043117, 0.006932, 0.006201, 0.02103, 0.019058, -0.01508, 0.037655, -0.015514, 0.023201, 0.024534, -0.004189, -0.031041, 0.054893, -0.017396, 0.008521, 0.010491, -0.021012, 0.019742, -0.062581, -0.026443, 0.082983, 0.000505, -0.01753, -0.050735, -0.004128, 0.065991, 0.002699, 0.015325, 0.000911, 0.03561, -0.001219, -0.001234, -0.019426, 0.034175, 0.018201, 0.017884, 0.037198, -0.000389, 0.009091, 0.011576, 0.004814, 0.019349, 0.000546, 0.019303, 0.022188, 0.028083, 0.009832, 0.056179, -0.038947, -0.026884, 0.002719, 0.021608, 0.004842, 0.036022, 0.030263, 0.004294, -0.069403, 0.017859, -0.091777, 0.078684, 0.029729, 0.017924, 0.039313, -0.065778, 0.06893, 0.013128, -0.018092, 0.017181, 0.020432, 0.034047, 0.02859, -0.001628, -0.08411, -0.125119, 0.126844, 0.045282, 0.018388, 0.055101, 0.070065, -0.039228, -0.027666, 0.107546, 0.037121, -0.011137, 0.026091, 0.042439, 0.052425, 0.005486, 0.022214, 0.022748, 0.02899, -0.047569, 0.069144, -0.008334, 0.043613, -0.052585, -0.03136, 0.035773, -0.087957, 5.3e-05, -0.08392, 0.091116, -0.04244, -0.093396, 0.079863, 0.053753, -0.058971, 0.061753, -0.026112, 0.035052, 0.014642, 0.002482, 0.064727, 0.031139, -0.017716, -0.048719, -0.02198, 0.089179, 0.044229, 0.015896, 0.051721, 0.031019, -0.041615, 0.048021, 0.03467, 0.011321, 0.022835, 0.020197, -0.009897, 0.057301]};
+const dates = S.dates;
+const A = S.a_rors;   // return on A max-loss per period
+const B = S.b_rors;   // return on B max-loss per period (compounded within month)
+const C = S.c_vs_a;   // C return as fraction of A max-loss
+const G = S.bond_mo;  // bonds monthly
+const SPX = S.spx_mo; // S&P 500 monthly
+const n = dates.length;
+const RF = 0.025;
+const YEARS = [...new Set(dates.map(d=>d.slice(0,4)))].sort();
+
+// ── Compute portfolio ──
+function calcPortfolio(fa, fb, fc, wb) {
+  const mo = [];
+  for (let i=0; i<n; i++) {
+    mo.push(fa*A[i] + fb*B[i] + wb*G[i] + fa*fc*C[i]);
+  }
+  return mo;
+}
+
+// ── Metrics ──
+function metrics(mo) {
+  let cap=1, peak=1, maxdd=0, mdEnd=0, caps=[];
+  for (let i=0; i<mo.length; i++) {
+    cap *= (1+mo[i]); caps.push(cap);
+    if (cap>peak) peak=cap;
+    let dd=(peak-cap)/peak;
+    if (dd>maxdd) { maxdd=dd; mdEnd=i; }
+  }
+  const cagr = cap>0 ? Math.pow(cap, 12/n)-1 : -1;
+  // Recovery
+  let rec=null;
+  if (maxdd>0) {
+    const pkVal = caps[mdEnd] / (1-maxdd); // approximate peak before drawdown
+    for (let i=mdEnd+1; i<caps.length; i++) {
+      if (caps[i]>=pkVal) { rec=i-mdEnd; break; }
+    }
+  }
+  // Vol, Sharpe, Sortino
+  const rfmo = Math.pow(1+RF,1/12)-1;
+  const mean = mo.reduce((a,b)=>a+b,0)/n;
+  const vari = mo.reduce((a,b)=>a+(b-mean)**2,0)/(n-1);
+  const vol = Math.sqrt(vari); const av = vol*Math.sqrt(12);
+  const excess = mo.map(r=>r-rfmo);
+  const dd2 = excess.map(e=>Math.min(0,e));
+  const ddv = dd2.reduce((a,b)=>a+b*b,0)/n;
+  const ddAnn = Math.sqrt(ddv)*Math.sqrt(12);
+  const sharpe = av>0 ? (cagr-RF)/av : 0;
+  const sortino = ddAnn>0 ? (cagr-RF)/ddAnn : 0;
+  const calmar = maxdd>0 ? cagr/maxdd : 0;
+  // VaR
+  const sm = [...mo].sort((a,b)=>a-b);
+  const vi = Math.max(0, Math.floor(0.05*n)-1);
+  const var95 = sm[vi];
+  const cvar95 = sm.slice(0,vi+1).reduce((a,b)=>a+b,0)/(vi+1)||sm[0];
+  const wins = mo.filter(r=>r>0).length;
+  const bestMo = Math.max(...mo); const worstMo = Math.min(...mo);
+  // Year by year
+  const yrRet = {};
+  dates.forEach((d,i)=>{ const yr=d.slice(0,4); if(!yrRet[yr]) yrRet[yr]=[]; yrRet[yr].push(mo[i]); });
+  const yrComp = {}; const yrCap = {}; let c2=1;
+  for (const yr of YEARS) {
+    const ms=yrRet[yr]||[];
+    let yc=1; ms.forEach(r=>yc*=(1+r)); yrComp[yr]=yc-1;
+    ms.forEach(r=>c2*=(1+r)); yrCap[yr]=c2;
+  }
+  const posYrs = Object.values(yrComp).filter(v=>v>0).length;
+  return { cagr, final:cap, maxdd, rec, av, sharpe, sortino, calmar,
+           var95, cvar95, wins, winRate:wins/n, bestMo, worstMo, caps,
+           yrComp, yrCap, posYrs, totalYrs:YEARS.length };
+}
+
+// ── Format helpers ──
+const pct=(v,d=1)=>{ if(v==null||isNaN(v)) return '—'; const s=Math.abs(v*100).toFixed(d)+'%'; return (v>=0?'+':'-')+s; };
+const fm=v=>{ if(!isFinite(v)||v<=0) return '$0'; return v>=1e6?'$'+(v/1e6).toFixed(2)+'M':'$'+Math.round(v).toLocaleString(); };
+const cl=v=>(v>=0?'pos':'neg');
+
+// ── Known benchmarks ──
+const PRECOMPUTED = [
+  { id:'spx', label:'S&P 500', color:'#ffffff', group:'bench', mo:SPX },
+  { id:'agg', label:'AGG Bonds', color:'#8b949e', group:'bench', mo:G },
+  { id:'p6040', label:'60/40 Blend', color:'#a8d8ea', group:'bench',
+    mo: dates.map((_,i)=>0.60*SPX[i]+0.40*G[i]) },
+];
+const PRECOMP_METRICS = PRECOMPUTED.map(p=>({...p, ...metrics(p.mo)}));
+
+// ── Allocation state ──
+let fa=0.30, fb=0.13, fc=0.0, wb=0.57;
+
+// ── Update allocation bar ──
+function updateBar() {
+  const total = fa+fb; 
+  const bondPct = Math.max(0, 1-total);
+  const cPct = fa*fc; // C cost as fraction of A capital
+  document.getElementById('barA').style.width = (fa*100).toFixed(0)+'%';
+  document.getElementById('barA').textContent = fa>0.06?'A '+Math.round(fa*100)+'%':'';
+  document.getElementById('barB').style.width = (fb*100).toFixed(0)+'%';
+  document.getElementById('barB').textContent = fb>0.06?'B '+Math.round(fb*100)+'%':'';
+  document.getElementById('barC').style.width = (cPct*100).toFixed(0)+'%';
+  document.getElementById('barC').textContent = cPct>0.04?'C':'';
+  document.getElementById('barG').style.width = (bondPct*100).toFixed(0)+'%';
+  document.getElementById('barG').textContent = bondPct>0.10?'Bonds '+Math.round(bondPct*100)+'%':bondPct>0.04?'B':'';
+  document.getElementById('infA').textContent='A: '+Math.round(fa*100)+'% capital in A max-loss';
+  document.getElementById('infB').textContent='B: '+Math.round(fb*100)+'% capital in B max-loss';
+  document.getElementById('infC').textContent=fc>0?'C: '+Math.round(fc*100)+'% of A max-loss':'C: off';
+  document.getElementById('infG').textContent='Bonds: '+Math.round(bondPct*100)+'%';
+  document.getElementById('infTotal').textContent='Total: '+Math.round((fa+fb+bondPct)*100)+'%';
+  const over = fa+fb > 1.001;
+  document.getElementById('warnBar').style.display = over ? 'block' : 'none';
+}
+
+// ── Update metrics and charts ──
+let barCtx, growCtx;
+function updateAll() {
+  wb = Math.max(0, 1-fa-fb);
+  updateBar();
+  const mo = calcPortfolio(fa, fb, fc, wb);
+  const m = metrics(mo);
+  renderKPIs(m);
+  renderBarChart(m);
+  renderGrowChart(m);
+  renderTable(m);
+  renderYrTable(m);
+}
+
+function renderKPIs(m) {
+  const good = v => v>0?'pos':'neg';
+  const cards = [
+    { l:'CAGR', v:pct(m.cagr,2), s:'Annualized compound', c:good(m.cagr) },
+    { l:'$1M → 13yr', v:fm(m.final*1e6), s:'Jan 2012 – Nov 2024', c:good(m.cagr) },
+    { l:'Sharpe', v:m.sharpe.toFixed(3), s:'(CAGR-2.5%)/Ann.Vol', c:m.sharpe>0.5?'pos':'' },
+    { l:'Sortino', v:m.sortino.toFixed(3), s:'(CAGR-2.5%)/Downside Vol', c:m.sortino>1?'pos':'' },
+    { l:'Calmar', v:m.calmar.toFixed(3), s:'CAGR / MaxDD', c:m.calmar>0.4?'pos':'' },
+    { l:'Max Drawdown', v:pct(-m.maxdd,1), s:m.rec?m.rec+' mo recovery':'not recovered', c:m.maxdd>0.5?'neg':m.maxdd>0.25?'':'' },
+    { l:'Ann. Vol', v:pct(m.av,1), s:'Monthly × √12', c:m.av>0.4?'neg':'' },
+    { l:'VaR 95%', v:pct(m.var95,1), s:'5th pctile monthly', c:m.var95<-0.1?'neg':'' },
+    { l:'CVaR 95%', v:pct(m.cvar95,1), s:'Avg tail loss', c:m.cvar95<-0.15?'neg':'' },
+    { l:'Win Rate', v:pct(m.winRate,1), s:m.posYrs+'/'+m.totalYrs+' positive years', c:m.winRate>0.85?'pos':'' },
+    { l:'Worst Month', v:pct(m.worstMo,1), s:'Single month low', c:'neg' },
+    { l:'Best Month', v:pct(m.bestMo,1), s:'Single month high', c:'pos' },
+  ];
+  document.getElementById('kpiGrid').innerHTML = cards.map(k=>
+    `<div class="kpi"><div class="kpi-l">${k.l}</div><div class="kpi-v ${k.c}">${k.v}</div><div class="kpi-s">${k.s}</div></div>`
+  ).join('');
+}
+
+function drawBarChart(ctx, W, H, yrComp, color) {
+  ctx.clearRect(0,0,W,H);
+  const PL=38,PR=8,PT=8,PB=20;
+  const yrs=YEARS; const vals=yrs.map(y=>yrComp[y]||0);
+  const mx=Math.max(...vals.map(Math.abs))*1.15||0.01;
+  const zero=PT+(H-PT-PB)*(mx/(2*mx));
+  // zero line
+  ctx.strokeStyle='#30363d'; ctx.lineWidth=0.5;
+  ctx.beginPath(); ctx.moveTo(PL,zero); ctx.lineTo(W-PR,zero); ctx.stroke();
+  const bw=(W-PL-PR)/yrs.length;
+  yrs.forEach((yr,i)=>{
+    const v=vals[i], h=Math.abs(v)/(2*mx)*(H-PT-PB);
+    const x=PL+i*bw+bw*0.1, w=bw*0.8, y=v>=0?zero-h:zero;
+    ctx.fillStyle=v>=0?color:'#f85149';
+    ctx.fillRect(x,y,w,Math.max(h,1));
+    ctx.fillStyle='#8b949e'; ctx.font='8px Consolas'; ctx.textAlign='center';
+    ctx.fillText(yr.slice(2),x+w/2,H-PB+13);
+    if(Math.abs(v)>0.05){
+      ctx.fillStyle=v>=0?color:'#f85149';
+      ctx.fillText((v>=0?'+':'')+(v*100).toFixed(0)+'%',x+w/2,v>=0?y-3:y+h+9);
+    }
+  });
+  // axis labels
+  ctx.fillStyle='#586069'; ctx.font='8px Consolas'; ctx.textAlign='right';
+  [mx,-mx,0].forEach(v=>{
+    const y=PT+(H-PT-PB)*(1-(v+mx)/(2*mx));
+    ctx.fillText((v>=0?'+':'')+(v*100).toFixed(0)+'%',PL-3,y+3);
+  });
+}
+
+function renderBarChart(m) {
+  const cv=document.getElementById('barChart');
+  const W=cv.parentElement.offsetWidth-24, H=180;
+  cv.width=W*devicePixelRatio; cv.height=H*devicePixelRatio;
+  cv.style.width=W+'px'; cv.style.height=H+'px';
+  const ctx=cv.getContext('2d'); ctx.scale(devicePixelRatio,devicePixelRatio);
+  drawBarChart(ctx,W,H,m.yrComp,'#58a6ff');
+}
+
+function renderGrowChart(m) {
+  const cv=document.getElementById('growChart');
+  const W=cv.parentElement.offsetWidth-24, H=180;
+  cv.width=W*devicePixelRatio; cv.height=H*devicePixelRatio;
+  cv.style.width=W+'px'; cv.style.height=H+'px';
+  const ctx=cv.getContext('2d'); ctx.scale(devicePixelRatio,devicePixelRatio);
+  ctx.clearRect(0,0,W,H);
+  const PL=52,PR=8,PT=8,PB=20;
+  // Draw benchmarks first (dim)
+  const allCaps = [...m.caps, ...PRECOMP_METRICS.flatMap(p=>p.caps)];
+  const gMax=Math.max(...allCaps)*1.06, gMin=0;
+  const xp=i=>PL+(i/(n-1))*(W-PL-PR);
+  const yp=v=>PT+(H-PT-PB)*(1-(v-gMin)/(gMax-gMin));
+  // gridlines
+  const grids=[5e5,1e6,2e6,5e6,10e6,20e6,50e6].filter(v=>v<=gMax*1.02);
+  grids.forEach(v=>{
+    ctx.strokeStyle='#21262d'; ctx.lineWidth=0.5;
+    ctx.beginPath(); ctx.moveTo(PL,yp(v)); ctx.lineTo(W-PR,yp(v)); ctx.stroke();
+    ctx.fillStyle='#8b949e'; ctx.font='8px Consolas'; ctx.textAlign='right';
+    ctx.fillText(v>=1e6?'$'+(v/1e6).toFixed(0)+'M':'$500K',PL-3,yp(v)+3);
+  });
+  // benchmark lines
+  const bColors={spx:'#ffffff30',agg:'#8b949e30',p6040:'#a8d8ea30'};
+  PRECOMP_METRICS.forEach(bm=>{
+    ctx.strokeStyle=bm.color+'60'; ctx.lineWidth=1; ctx.setLineDash([3,3]);
+    ctx.beginPath(); let s=false;
+    bm.caps.forEach((v,i)=>{ const x=xp(i),y=yp(v); if(!s){ctx.moveTo(x,y);s=true;}else ctx.lineTo(x,y); });
+    ctx.stroke(); ctx.setLineDash([]);
+  });
+  // main line
+  ctx.strokeStyle='#58a6ff'; ctx.lineWidth=2;
+  ctx.beginPath(); let sf=false;
+  m.caps.forEach((v,i)=>{ const x=xp(i),y=yp(v); if(!sf){ctx.moveTo(x,y);sf=true;}else ctx.lineTo(x,y); });
+  ctx.stroke();
+  // x labels
+  ctx.fillStyle='#8b949e'; ctx.font='8px Consolas'; ctx.textAlign='center';
+  YEARS.forEach((yr,i)=>{
+    // find index of last month in this year
+    const lastIdx = dates.reduce((acc,d,idx)=>d.startsWith(yr)?idx:acc, -1);
+    if(lastIdx>=0 && (i%3===0||i===YEARS.length-1)) ctx.fillText(yr,xp(lastIdx),H-PB+13);
+  });
+  // legend
+  ctx.fillStyle='#8b949e'; ctx.font='8px Consolas'; ctx.textAlign='left';
+  ctx.fillText('— Your portfolio',PL+4,PT+11);
+  ctx.strokeStyle='#ffffff30'; ctx.setLineDash([3,2]); ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(PL+4,PT+20); ctx.lineTo(PL+22,PT+20); ctx.stroke();
+  ctx.setLineDash([]); ctx.fillText('SPX / AGG / 60-40',PL+26,PT+23);
+  ctx.strokeStyle='#30363d'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(PL,PT); ctx.lineTo(PL,PT+H-PT-PB); ctx.lineTo(W-PR,PT+H-PT-PB); ctx.stroke();
+}
+
+// ── Comparison table ──
+const BENCH_PRESETS=[
+  { fa:0.10,fb:0.13,fc:0,wb:0.77,label:'A10+B13+Bonds77',color:'#3fb950'},
+  { fa:0.30,fb:0.20,fc:0,wb:0.50,label:'A30+B20+Bonds50',color:'#58a6ff'},
+  { fa:0.30,fb:0.30,fc:0,wb:0.40,label:'A30+B30+Bonds40',color:'#d2a8ff'},
+  { fa:0.60,fb:0.30,fc:0,wb:0.10,label:'A60+B30+Bonds10',color:'#ff9f43'},
+  { fa:0.30,fb:0.00,fc:0,wb:0.70,label:'A30 only',color:'#79c0ff'},
+  { fa:0.00,fb:0.30,fc:0,wb:0.70,label:'B30 only',color:'#e3b341'},
+];
+const BENCH_METRICS = BENCH_PRESETS.map(p=>({ ...p, mo:calcPortfolio(p.fa,p.fb,p.fc,p.wb), ...metrics(calcPortfolio(p.fa,p.fb,p.fc,p.wb)) }));
+
+let lastTable='';
+function renderTable(m) {
+  const all=[
+    {label:'▶ Your Portfolio',color:'#58a6ff',m},
+    ...BENCH_METRICS.map(b=>({label:b.label,color:b.color,m:b})),
+    ...PRECOMP_METRICS.map(b=>({label:b.label+' ⊞',color:b.color,m:b})),
+  ];
+  const body=document.getElementById('compBody');
+  body.innerHTML=all.map((row,idx)=>{
+    const r=row.m; const isUser=idx===0;
+    const rowCl=isUser?' class="highlight-row"':'';
+    const dot=`<span class="dn" style="background:${row.color}"></span>`;
+    return `<tr${rowCl}><td class="left">${dot}${row.label}</td>
+      <td class="${cl(r.cagr)}">${pct(r.cagr,2)}</td>
+      <td class="${cl(r.cagr)}">${fm(r.final*1e6)}</td>
+      <td class="${r.sharpe>0.5?'pos':''}">${r.sharpe.toFixed(3)}</td>
+      <td class="${r.sortino>1?'pos':''}">${r.sortino.toFixed(3)}</td>
+      <td>${r.calmar.toFixed(3)}</td>
+      <td class="${r.av>0.4?'neg':''}">${pct(r.av,1)}</td>
+      <td class="${r.maxdd>0.4?'neg':''}">${pct(-r.maxdd,1)}</td>
+      <td class="neg">${pct(r.worstMo,1)}</td>
+      <td class="${r.winRate>0.85?'pos':''}">${pct(r.winRate,1)}</td>
+    </tr>`;
+  }).join('');
+}
+
+function renderYrTable(m) {
+  const allSeries=[
+    {label:'Your Portfolio',color:'#58a6ff',yrc:m.yrComp},
+    ...BENCH_METRICS.map(b=>({label:b.label,color:b.color,yrc:b.yrComp})),
+    {label:'SPX ⊞',color:'#ffffff',yrc:PRECOMP_METRICS.find(x=>x.id==='spx').yrComp},
+    {label:'60/40 ⊞',color:'#a8d8ea',yrc:PRECOMP_METRICS.find(x=>x.id==='p6040').yrComp},
+  ];
+  const head=document.getElementById('yrHead');
+  const body=document.getElementById('yrBody');
+  // Only build once
+  if(head.children.length>1 && body.children.length>0) {
+    // Just update "Your Portfolio" column (index 1)
+    const rows=body.querySelectorAll('tr');
+    rows.forEach((tr,yi)=>{
+      const yr=YEARS[yi]; const v=m.yrComp[yr];
+      const td=tr.children[1];
+      td.className=v!=null?(v>=0?'pos':'neg'):'muted';
+      td.textContent=v!=null?pct(v,1):'—';
+    });
+    return;
+  }
+  // Build table header
+  while(head.children.length>1) head.removeChild(head.lastChild);
+  allSeries.forEach(s=>{
+    const th=document.createElement('th');
+    th.innerHTML=`<span style="color:${s.color};font-size:9px">${s.label}</span>`;
+    head.appendChild(th);
+  });
+  body.innerHTML='';
+  YEARS.forEach(yr=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td class="left muted">${yr}</td>`;
+    allSeries.forEach(s=>{
+      const v=s.yrc[yr];
+      const bold=Math.abs(v||0)>0.3?' bold':'';
+      tr.innerHTML+=v!=null?`<td class="${v>=0?'pos':'neg'}${bold}">${pct(v,1)}</td>`:'<td class="muted">—</td>';
+    });
+    body.appendChild(tr);
+  });
+}
+
+// ── Slider events ──
+function readSliders() {
+  fa=parseInt(document.getElementById('slA').value)/100;
+  fb=parseInt(document.getElementById('slB').value)/100;
+  fc=parseInt(document.getElementById('slC').value)/100;
+  document.getElementById('valA').textContent=Math.round(fa*100)+'%';
+  document.getElementById('valB').textContent=Math.round(fb*100)+'%';
+  document.getElementById('valC').textContent=Math.round(fc*100)+'%';
+  // clear preset highlight
+  document.querySelectorAll('.pbt').forEach(b=>b.classList.remove('active'));
+}
+
+['slA','slB','slC'].forEach(id=>{
+  document.getElementById(id).addEventListener('input',()=>{ readSliders(); updateAll(); });
 });
-cx.fillStyle='#8b949e';cx.font='10px Consolas,monospace';cx.textAlign='center';
-years.forEach((yr,i)=>{if(i%2===0||i===years.length-1)cx.fillText(yr,xp(i),P.t+h+22)});
-const order=[...ds].sort((a,b)=>a.group==='strategy'?1:-1);
-order.forEach(d=>{
-  const isBench=d.group==='bench';
-  const isWinner=d.label.includes('60%');
-  cx.strokeStyle=d.color;
-  cx.lineWidth=isWinner?2.5:isBench?1.2:1.5;
-  cx.globalAlpha=isBench?0.6:1.0;
-  cx.setLineDash(isBench?[5,3]:[]);
-  cx.beginPath();let s=false;
-  d.vals.forEach((v,i)=>{if(v==null)return;const x=xp(i),y=yp(v);if(!s){cx.moveTo(x,y);s=true;}else cx.lineTo(x,y);});
-  cx.stroke();cx.setLineDash([]);
+
+// ── Preset buttons ──
+document.getElementById('presets').addEventListener('click',e=>{
+  const btn=e.target.closest('.pbt'); if(!btn) return;
+  document.querySelectorAll('.pbt').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const nfa=parseInt(btn.dataset.fa), nfb=parseInt(btn.dataset.fb), nfc=parseInt(btn.dataset.fc);
+  document.getElementById('slA').value=nfa;
+  document.getElementById('slB').value=nfb;
+  document.getElementById('slC').value=nfc;
+  readSliders(); updateAll();
 });
-cx.globalAlpha=1;
-cx.strokeStyle='#30363d';cx.lineWidth=1;
-cx.beginPath();cx.moveTo(P.l,P.t);cx.lineTo(P.l,P.t+h);cx.lineTo(P.l+w,P.t+h);cx.stroke();
-const leg=document.getElementById('leg');
-ds.forEach(d=>{
-  const el=document.createElement('div');el.className='li';
-  const ld=document.createElement('div');ld.className='ld';
-  ld.style.background=d.dashed?'none':d.color;
-  ld.style.border=d.dashed?`2px dashed ${d.color}`:'none';
-  el.appendChild(ld);
-  const sp=document.createElement('span');sp.textContent=d.label+(d.group==='bench'?' [benchmark]':'');
-  el.appendChild(sp);leg.appendChild(el);
-});
+
+// ── Init ──
+updateAll();
+// highlight first preset
+document.querySelectorAll('.pbt')[0].classList.add('active');
 </script>
 </body>
 </html>
